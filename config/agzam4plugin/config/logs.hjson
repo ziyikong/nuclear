@@ -1,0 +1,6 @@
+{
+	// Enables or disables new log creation
+	logging: true
+	// Number database log rows before rotation
+	maxRows: 50000
+}

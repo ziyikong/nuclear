@@ -1,0 +1,8 @@
+{
+	// Is custom maps system enabled
+	enabled: true
+	// Minimum map playtime to start voting
+	skipmapRequiredMapPlaytime: 0
+	// Minimum server playtime to start voting
+	skipmapRequiredTotalPlaytime: 5
+}

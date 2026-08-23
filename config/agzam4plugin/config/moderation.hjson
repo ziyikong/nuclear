@@ -1,0 +1,14 @@
+{
+	// Initial moderator ban duration in minutes
+	startBanTime: 5
+	// Maximum moderator ban duration in minutes
+	maxBanTime: 60
+	// Ban duration multiplier for repeated offenses
+	banTimeMultiplier: 2
+	// Votekick ban duration in minutes
+	votekickBanDuration: 60
+	// Minimum map playtime to start voting
+	votekickRequiredMapPlaytime: 5
+	// Minimum server playtime to start voting
+	votekickRequiredTotalPlaytime: 15
+}

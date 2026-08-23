@@ -1,0 +1,20 @@
+block.dp-ghost.name = \u4EA1\u9B42
+block.dp-ghost.description = \u5E7D\u7075\u7684\u52A0\u5F3A\u7248\uFF0C\u53EF\u4EE5\u53D1\u5C04\u6570\u5341\u79CD\u5F39\u836F\uFF0C\u5C04\u901F\u8F83\u5FEB\u3002
+
+block.dp-catastrophe.name = \u707E\u53D8
+block.dp-catastrophe.description = \u878D\u6BC1\u7684\u52A0\u5F3A\u7248\uFF0C\u5145\u80FD\u5E76\u5411\u654C\u4EBA\u53D1\u5C04\u4E00\u9053\u66F4\u731B\u70C8\u7684\u6301\u7EED\u6FC0\u5149\u675F\uFF0C\u9700\u8981\u66F4\u591A\u7684\u51B7\u51BB\u6DB2\u7528\u4E8E\u51B7\u5374\u3002
+
+block.dp-banshee.name = 女妖
+block.dp-banshee.description = 亡魂加强版，拥有更强的杀伤力和更远的射程
+
+block.dp-calamity.name = 灾祸
+block.dp-calamity.description = 灾变加强版，拥有更强的杀伤力和更远的射程
+
+block.dp-extinction.name = 灾绝
+block.dp-extinction.description = 烧光一切吧
+
+block.dp-dark-alloy-forge.name = 深暗合金锻造厂
+block.dp-dark-alloy-forge.description = 使用铅，硅，爆炸混合物，相织布与巨浪合金制造深暗合金，需要电力。
+
+item.dp-dark-alloy.name = 深暗合金
+item.dp-dark-alloy.description = 某种新式合金，蕴含着某种能量。用于制造更高级的炮塔或作为高级弹药。
