@@ -25,6 +25,9 @@ val webCacheDirName by config.key("web", "地图缓存目录名(位于config/map
 
 private val http: HttpClient by lazy { HttpClient.newHttpClient() }
 
+/** 详情JSON缓存,避免重复拉取 */
+private val detailCache = mutableMapOf<Int, Jval>()
+
 private fun String.httpGet(): String {
     val req = HttpRequest.newBuilder(URI.create(this))
         .header("User-Agent", "ScriptAgent-WebMaps")
@@ -63,9 +66,6 @@ private fun Jval.extractDescription(default: String): String =
 
 val webProvider = object : MapProvider() {
     private val dir: Fi get() = Vars.customMapDirectory.child(webCacheDirName)
-
-    /** 详情JSON缓存,避免重复拉取 */
-    private val detailCache = mutableMapOf<Int, Jval>()
 
     private suspend fun fetchDetail(id: Int): Jval = detailCache[id] ?: run {
         val d = withContext(Dispatchers.IO) { "$webHost/maps/$id.json".httpGet() }
