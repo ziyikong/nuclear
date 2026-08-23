@@ -1,4 +1,4 @@
-﻿package wayzer.user.ext
+package wayzer.user.ext
 
 import arc.util.io.Writes
 import mindustry.gen.Building
@@ -42,20 +42,15 @@ companion object Api {
     @DslMarker
     annotation class SkillScopeMarker
 
-    @Suppress("MemberVisibilityCanBePrivate")
-    class SkillScope(val name: String, val player: Player, val ctx: CommandContext) {
-        @SkillScopeMarker
-        fun returnReply(msg: PlaceHoldString): Nothing = ctx.returnReply(msg)
-
-        @SkillScopeMarker
-        fun checkNotPvp() {
-            if (state.rules.pvp)
-                returnReply("[red]当前模式禁用".with())
-        }
+        @Suppress("MemberVisibilityCanBePrivate")
+        class SkillScope(val name: String, val player: Player, val ctx: CommandContext) {
+            @SkillScopeMarker
+            fun returnReply(msg: PlaceHoldString): Nothing = ctx.returnReply(msg)
 
         /** @param coolDown in ms,  -1一局冷却 */
         fun checkCoolDown(coolDown: Int, set: Boolean = true): Boolean {
-            val key = "@"
+            // 每个玩家每个技能独立冷却
+            val key = "${player.uuid()}:$name"
             if (key in used) {
                 if (coolDown < 0) {
                     ctx.reply("[red]该技能每局限用一次".with())
@@ -90,6 +85,8 @@ companion object Api {
             this.aliases = aliases.toList()
             body {
                 @Suppress("MemberVisibilityCanBePrivate")
+                if (state.rules.pvp)
+                    returnReply("[red]PVP模式下禁用所有技能".with())
                 if (player!!.dead())
                     returnReply("[red]你已死亡".with())
                 SkillScope(name, player!!, context).body()
@@ -111,7 +108,6 @@ companion object Api {
 Api.script = this
 
 skill("mono", "技能: 召唤采矿机(自动挖铜/铅),一局限一次,PVP禁用", "矿机") {
-    checkNotPvp()
     checkOrSetCoolDown(-1)
     UnitTypes.mono.create(player.team()).also {
         it.set(player)
@@ -123,7 +119,6 @@ skill("mono", "技能: 召唤采矿机(自动挖铜/铅),一局限一次,PVP禁�
 skill("poly", "技能: 召唤工程无人机(可建造/维修),一局限一次,PVP禁用", "工程", "工程机") {
     if (state.rules.bannedBlocks.contains(Blocks.airFactory))
         returnReply("[red]该地图工程无人机已禁封,禁止召唤".with())
-    checkNotPvp()
     checkOrSetCoolDown(-1)
     UnitTypes.poly.create(player.team()).also {
         it.set(player)
@@ -135,7 +130,6 @@ skill("poly", "技能: 召唤工程无人机(可建造/维修),一局限一次,P
 skill("mega", "技能: 召唤大型支援机(治疗光束),一局限一次,PVP禁用", "支援", "大型机") {
     if (state.rules.bannedBlocks.contains(Blocks.airFactory))
         returnReply("[red]该地图大型支援机已禁封,禁止召唤".with())
-    checkNotPvp()
     checkOrSetCoolDown(-1)
     UnitTypes.mega.create(player.team()).also {
         it.set(player)
@@ -160,7 +154,7 @@ skill("shield", "技能: 获得等同最大血量的护盾值,冷却120秒", "�
 
 skill("overclock", "技能: 获得超频状态(攻速/移速/伤害提升),冷却90秒", "超频", "加速") {
     checkOrSetCoolDown(90000)
-    player.unit()?.apply(StatusEffects.overclock, 789191919100f)
+    player.unit()?.apply(StatusEffects.overclock, 600f)
     broadcastSkill("超频")
 }
 
@@ -198,7 +192,6 @@ skill("repair", "技能: 修复周围100格内己方建筑(30%血量),冷却120�
 }
 
 skill("retusa", "技能: 召唤海军t1小绿(发射制导鱼雷),一局限一次,PVP禁用,需水域", "t1小绿", "海军") {
-    checkNotPvp()
     checkOrSetCoolDown(-1)
     UnitTypes.retusa.create(player.team()).also {
         it.set(player)
