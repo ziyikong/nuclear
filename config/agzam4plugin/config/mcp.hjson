@@ -1,0 +1,8 @@
+{
+	// Determines if MCP integration is enabled
+	enabled: true
+	// The name of the server instance
+	name: mindustry-server
+	// Custom system instructions or prompt for the MCP server
+	instructions: ""
+}

@@ -1,0 +1,4 @@
+{
+	// Link to the Discord server, used in the /discord command
+	discordLink: ""
+}
