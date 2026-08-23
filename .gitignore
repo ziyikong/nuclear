@@ -36,3 +36,8 @@ target/
 .idea/
 .vscode/
 *.swp
+
+# ===== Mindustry 运行时产物 =====
+config/scripts/cache/
+config/scripts/data/*.db*
+config/scripts/data/kvStore.mv
