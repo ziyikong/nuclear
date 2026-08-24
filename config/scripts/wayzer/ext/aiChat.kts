@@ -17,8 +17,8 @@ name = "扩展: AI问答与抽奖(钍币)"
 
 // ===== AI 配置 =====
 val aiEnabled by config.key(true, "是否启用AI问答")
-val aiUrl by config.key("https://api.ltzy.top/v1", "OpenAI兼容接口完整地址,例如 https://xxx/v1/chat/completions")
-val aiKey by config.key("sk-1fa90af21cc592a68f4f9d4cf82cc1369e0e530ca875d8eb2d01ac970b727988", "API Key,留空则不发送Authorization头")
+val aiUrl by config.key("https://api.ltzy.top/v1/chat/completions", "OpenAI兼容接口完整地址,例如 https://xxx/v1/chat/completions")
+val aiKey by config.key("", "API密钥请配置在config.conf中")
 val aiModel by config.key("zhipu/glm-4.7-flash", "模型名")
 val aiPrice by config.key(1L, "每次提问消耗的钍")
 val aiCooldownSec by config.key(10, "提问冷却(秒)")
@@ -96,9 +96,13 @@ command("ai", "向AI提问(消耗钍)") {
                 withContext(Dispatchers.game) { gachaRefund(me, aiPrice) }
             } catch (e: Throwable) {
                 Log.err(e)
+                val reason = (e.message ?: e.toString()).take(150)
                 withContext(Dispatchers.game) {
                     contextScript<Economy>().addMoney(me, aiPrice) // 失败退款
-                    me.sendMessage("[red]AI暂时不可用,已退还{price}钍".with("price" to aiPrice).toString())
+                    me.sendMessage(
+                        "[red]AI调用失败(已退还{price}钍):[]\n[lightgrey]{reason}"
+                            .with("price" to aiPrice, "reason" to reason).toString()
+                    )
                 }
             }
         }
