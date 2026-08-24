@@ -1,6 +1,9 @@
+@file:Depends("wayzer/user/economy", "钍币经济")
+
 package wayzer.user.ext
 
 import arc.util.io.Writes
+import cf.wayzer.scriptAgent.contextScript
 import mindustry.gen.Building
 import mindustry.gen.Unit as MindustryUnit
 import wayzer.user.ext.Skills.Api.skill
@@ -75,6 +78,15 @@ companion object Api {
             "[yellow][技能][green]{player.name}[white]使用了[green]{skill}[white]技能."
                 .with("player" to player, "skill" to skill), quite = true
         )
+
+        /** 扣除钍币,余额不足则终止 */
+        @SkillScopeMarker
+        fun checkCost(cost: Long) {
+            if (cost <= 0) return
+            val eco = contextScript<Economy>()
+            if (!eco.costMoney(player, cost))
+                returnReply("[red]钍不足: 需要[accent]{cost}[]钍, 你有[gold]{have}[]钍".with("cost" to cost, "have" to eco.getMoney(player)))
+        }
     }
 
     @ScriptDsl
@@ -109,6 +121,7 @@ Api.script = this
 
 skill("mono", "技能: 召唤采矿机(自动挖铜/铅),一局限一次,PVP禁用", "矿机") {
     checkOrSetCoolDown(-1)
+    checkCost(50)
     UnitTypes.mono.create(player.team()).also {
         it.set(player)
         it.add()
@@ -120,6 +133,7 @@ skill("poly", "技能: 召唤工程无人机(可建造/维修),一局限一次,P
     if (state.rules.bannedBlocks.contains(Blocks.airFactory))
         returnReply("[red]该地图工程无人机已禁封,禁止召唤".with())
     checkOrSetCoolDown(-1)
+    checkCost(80)
     UnitTypes.poly.create(player.team()).also {
         it.set(player)
         it.add()
@@ -131,6 +145,7 @@ skill("mega", "技能: 召唤大型支援机(治疗光束),一局限一次,PVP�
     if (state.rules.bannedBlocks.contains(Blocks.airFactory))
         returnReply("[red]该地图大型支援机已禁封,禁止召唤".with())
     checkOrSetCoolDown(-1)
+    checkCost(120)
     UnitTypes.mega.create(player.team()).also {
         it.set(player)
         it.add()
@@ -140,6 +155,7 @@ skill("mega", "技能: 召唤大型支援机(治疗光束),一局限一次,PVP�
 
 skill("heal", "技能: 恢复50%生命值,冷却60秒", "治疗", "回血") {
     checkOrSetCoolDown(60000)
+    checkCost(40)
     player.unit()?.let { it.heal(it.maxHealth * 0.5f) }
     broadcastSkill("治疗")
 }
@@ -147,6 +163,7 @@ skill("heal", "技能: 恢复50%生命值,冷却60秒", "治疗", "回血") {
 skill("shield", "技能: 获得等同最大血量的护盾值,冷却120秒", "护盾") {
     checkOrSetCoolDown(120000)
     player.unit()?.let { unit ->
+    checkCost(60)
         unit.shield = unit.maxHealth.toFloat()
     }
     broadcastSkill("护盾")
@@ -155,6 +172,7 @@ skill("shield", "技能: 获得等同最大血量的护盾值,冷却120秒", "�
 skill("overclock", "技能: 永久获得超频+过载+加速+Boss+护盾强化(死亡前一直有效),冷却90秒", "超频", "加速") {
     checkOrSetCoolDown(90000)
     player.unit()?.let { u ->
+    checkCost(150)
         listOf(
             StatusEffects.overclock,
             StatusEffects.overdrive,
@@ -168,6 +186,7 @@ skill("overclock", "技能: 永久获得超频+过载+加速+Boss+护盾强化(�
 
 skill("ammo", "技能: 补充弹药至上限,冷却45秒", "补给", "弹药") {
     checkOrSetCoolDown(45000)
+    checkCost(30)
     player.unit()?.let { unit ->
         // 重新装填所有武器
         unit.mounts.forEach { mount ->
@@ -179,8 +198,9 @@ skill("ammo", "技能: 补充弹药至上限,冷却45秒", "补给", "弹药") {
     broadcastSkill("补给")
 }
 
-skill("tp", "技能: 传送到核心,冷却180秒", "传送", "回城") {
+skill("tp", "技能: 传送到核心(50钍),冷却180秒", "传送", "回城") {
     checkOrSetCoolDown(180000)
+    checkCost(50)
     val core = player.team().cores().firstOrNull()
     if (core != null) {
         player.unit()?.set(core.x, core.y)
@@ -190,8 +210,9 @@ skill("tp", "技能: 传送到核心,冷却180秒", "传送", "回城") {
     }
 }
 
-skill("repair", "技能: 修复周围100格内己方建筑(30%血量),冷却120秒", "修复") {
+skill("repair", "技能: 修复周围100格内己方建筑(30%血量)(80钍),冷却120秒", "修复") {
     checkOrSetCoolDown(120000)
+    checkCost(80)
     val unit = player.unit() ?: returnReply("[red]你没有单位".with())
     Groups.build.filter { it.team == player.team() && it.dst(unit) < 100f }.forEach {
         it.heal(it.maxHealth * 0.3f)
@@ -201,6 +222,7 @@ skill("repair", "技能: 修复周围100格内己方建筑(30%血量),冷却120�
 
 skill("retusa", "技能: 召唤海军t1小绿(发射制导鱼雷),一局限一次,PVP禁用,需水域", "t1小绿", "海军") {
     checkOrSetCoolDown(-1)
+    checkCost(120)
     UnitTypes.retusa.create(player.team()).also {
         it.set(player)
         it.add()
@@ -208,8 +230,9 @@ skill("retusa", "技能: 召唤海军t1小绿(发射制导鱼雷),一局限一�
     broadcastSkill("t1小绿")
 }
 
-skill("plague", "技能: 瘟疫-随机感染一单位2层腐蚀,腐蚀单位死传播(层数+2),冷却180秒", "瘟疫") {
+skill("plague", "技能: 瘟疫-随机感染一单位2层腐蚀,腐蚀单位死传播(层数+2)(200钍),冷却180秒", "瘟疫") {
     checkOrSetCoolDown(180000)
+    checkCost(200)
     val targets = Groups.unit.filter { it.team != player.team() && it.healthf() > 0f }
     if (targets.isEmpty()) returnReply("[red]无有效目标".with())
     val target = targets.random()
