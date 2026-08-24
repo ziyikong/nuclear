@@ -152,9 +152,17 @@ skill("shield", "技能: 获得等同最大血量的护盾值,冷却120秒", "�
     broadcastSkill("护盾")
 }
 
-skill("overclock", "技能: 获得超频状态(攻速/移速/伤害提升),冷却90秒", "超频", "加速") {
+skill("overclock", "技能: 永久获得超频+过载+加速+Boss+护盾强化(死亡前一直有效),冷却90秒", "超频", "加速") {
     checkOrSetCoolDown(90000)
-    player.unit()?.apply(StatusEffects.overclock, 600f)
+    player.unit()?.let { u ->
+        listOf(
+            StatusEffects.overclock,
+            StatusEffects.overdrive,
+            StatusEffects.fast,
+            StatusEffects.boss,
+            StatusEffects.shielded
+        ).forEach { u.apply(it, Float.MAX_VALUE) }
+    }
     broadcastSkill("超频")
 }
 
