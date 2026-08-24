@@ -20,32 +20,11 @@ val onlyInNight by config.key(false, "仅在凌晨自动更新", "本地时间1:
 val useMirror by config.key(false, "使用镜像加速下载")
 val mirror by config.key("https://gh.tinylake.tech", "GH镜像源")
 val configSync by config.key(true, "更新时从git仓库同步config/scripts目录")
+val autoSync by config.key(true, "自动同步: 定时检查GitHub仓库并拉取最新config/scripts")
+val autoSyncRestart by config.key(false, "自动同步到新版本后是否计划重启(关闭则需手动重启或sa reload生效)")
+val configRepo by config.key("ziyikong/nuclear", "配置仓库(GitHub 用户/名称)")
+val githubToken by config.key("", "GitHub令牌: 服务器目录非git克隆时必填,用于拉取私有仓库")
 
-private val serverDir: File
-    get() = File(BeControl::class.java.protectionDomain.codeSource.location.toURI().path).parentFile
-
-/** 从origin/main强制同步config/scripts子树(本地未提交改动会被覆盖!) */
-fun syncScriptsFromGit(): String {
-    fun git(vararg args: String): String {
-        val p = ProcessBuilder("git", "-C", serverDir.absolutePath, *args)
-            .redirectErrorStream(true).start()
-        val out = p.inputStream.bufferedReader().readText()
-        if (!p.waitFor(120, TimeUnit.SECONDS)) {
-            p.destroyForcibly(); error("git 执行超时")
-        }
-        if (p.exitValue() != 0) error(out.takeLast(400))
-        return out
-    }
-    git("fetch", "origin", "main")
-    // 先删除上游已删除的脚本(checkout不会处理删除)
-    val deleted = git("diff", "--name-only", "--diff-filter=D", "HEAD", "FETCH_HEAD", "--", "config/scripts")
-        .split('\n').map { it.trim() }.filter { it.isNotEmpty() }
-    if (deleted.isNotEmpty()) {
-        git("rm", "-q", "--force", "--", *deleted.toTypedArray())
-        Log.info("[ConfigSync] 删除上游已移除的 ${deleted.size} 个文件")
-    }
-    return git("checkout", "FETCH_HEAD", "--", "config/scripts")
-}
 
 suspend fun download(url: String, file: File): Int = runInterruptible(Dispatchers.IO) {
     val steam = URL(url).openStream()
@@ -69,6 +48,18 @@ suspend fun download(url: String, file: File): Int = runInterruptible(Dispatcher
 
 onEnable {
     loop {
+        // ===== 自动同步仓库中的config/scripts =====
+        if (autoSync) try {
+            if (hasScriptUpdate()) {
+                syncScripts(configRepo, githubToken)
+                broadcast("[green]🔄 检测到仓库更新,config/scripts 已自动同步至最新版".with(), quite = true)
+                if (autoSyncRestart)
+                    contextScript<wayzer.cmds.Restart>().scheduleRestart("脚本/配置自动更新")
+            }
+        } catch (e: Throwable) {
+            logger.warning("[ConfigSync] 自动同步失败: $e")
+        }
+        // ===== 自动检查服务端新版本 =====
         if (enableUpdate) {
             if (!onlyInNight || LocalDateTime.now().hour in 1..6)
                 try {
@@ -112,7 +103,7 @@ suspend fun update(version: String, url: String) {
     Log.info("新版本 $version 下载完成: ${size / 1024}KB")
     contextScript<wayzer.cmds.Restart>().scheduleRestart("新版本更新 $version") {
         if (configSync) try {
-            Log.info(syncScriptsFromGit())
+            Log.info(syncScripts(configRepo, githubToken))
             Log.info("config/scripts 已从仓库同步")
         } catch (e: Throwable) {
             Log.err("config/scripts 同步失败(继续更新jar): $e")
@@ -134,7 +125,7 @@ command("updateConfig", "从git仓库强制同步config/scripts目录") {
         reply("[green]正在后台拉取仓库...".with())
         launch {
             try {
-                val out = syncScriptsFromGit()
+                val out = syncScripts(configRepo, githubToken)
                 reply("[green]config/scripts 已同步至origin/main".with())
                 reply(
                     "[yellow]脚本变更需重启后完全生效;也可使用sa指令重载。\n[lightgrey]{out}"
