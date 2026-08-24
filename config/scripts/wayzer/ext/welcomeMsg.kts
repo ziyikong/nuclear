@@ -11,6 +11,7 @@ val type by config.key(MsgType.InfoMessage, "发送方式")
 val template by config.key(
     """
     Welcome to this Server
+    [gold]QQ群: [orange]874567818[] 欢迎加入交流!
     [scarlet]欢迎[white]{player.name}[cyan]来到
     [negstat]nu[crimson]cl[maroon]ea[purple]r  p[brick]ow[scarlet]er[sky]服务器[]
 """.trimIndent(), "欢迎信息模板"
