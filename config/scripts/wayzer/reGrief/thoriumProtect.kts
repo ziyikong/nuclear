@@ -13,7 +13,7 @@ import mindustry.world.Tile
 
 name = "反破坏: 钍反应堆核心保护(中文)"
 
-val protectRadius by config.key(10, "核心保护区半径(格),<=0关闭拦截")
+val protectRadius by config.key(0, "核心保护区半径(格),>0才启用拦截;默认0=允许在核心旁放置")
 val announceCN by config.key(true, "启用中文建造播报(替换Agzam插件的俄语播报)")
 
 /** 是否位于任意队伍核心的保护区 */
