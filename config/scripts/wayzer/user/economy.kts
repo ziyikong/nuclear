@@ -43,6 +43,22 @@ fun costMoney(p: Player, n: Long): Boolean {
     return true
 }
 
+/** 管理员发放/扣除(控制台与游戏内均可) */
+fun adminMoney(op: String, targetName: String, amountStr: String?): String {
+    val amount = amountStr?.toLongOrNull() ?: return "[red]金额错误: '$amountStr'"
+    if (amount <= 0) return "[red]金额必须为正数"
+    val t = Groups.player.find { it.uuid() == targetName }
+        ?: Groups.player.find { arc.util.Strings.stripColors(it.name).contains(targetName, true) }
+        ?: return "[red]玩家不在线或未找到: $targetName (支持名字模糊/uuid)"
+    val cur = getMoney(t)
+    val newV = if (op == "add") cur + amount else (cur - amount).coerceAtLeast(0L)
+    balanceMap[t.uuid()] = newV.toString()
+    return "[green]已${if (op == "add") "增加" else "扣除"} {name} 的钍 [yellow]{delta}(余额 {now})" +
+        "".with(
+            "name" to t.coloredName(), "delta" to amount, "now" to newV
+        ).toString()
+}
+
 fun topMoney(limit: Int = 10): List<Pair<String, Long>> =
     balanceMap.entries.mapNotNull { e -> e.value.toLongOrNull()?.let { e.key to it } }
         .sortedByDescending { it.second }.take(limit)
@@ -163,7 +179,13 @@ command("money", "查看钍币(排行榜)") {
     aliases = listOf("钍", "余额")
     usage = "[top]"
     body {
-        if (arg.firstOrNull()?.lowercase() == "top") {
+        val sub0 = arg.firstOrNull()?.lowercase()
+        if (sub0 == "add" || sub0 == "del") {
+            if (!hasPermission("wayzer.money.admin")) returnReply("[red]无权限".with())
+            reply(adminMoney(sub0, arg.getOrElse(1) { "" }, arg.getOrNull(2)).with())
+            return@body
+        }
+        if (sub0 == "top") {
             val list = topMoney(10)
             reply(
                 "[gold]===[white] 钍币排行 [gold]===\n{list:\n}".with(
@@ -205,3 +227,4 @@ onEnable {
         }
     }
 }
+PermissionApi.registerDefault("wayzer.money.admin", group = "@admin")
