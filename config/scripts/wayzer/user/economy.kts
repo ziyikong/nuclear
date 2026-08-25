@@ -94,6 +94,7 @@ listen<EventType.GameOverEvent> { event ->
 
 // ===== 红包 =====
 class RedPacket(
+    val fromUuid: String,
     val fromName: String,
     val shares: ArrayDeque<Long>,
     val expireAt: Long
@@ -122,7 +123,7 @@ command("hongbao", "发红包") {
         }
         shares.add(remain)
 
-        redPackets.add(RedPacket(sender.coloredName(), shares, System.currentTimeMillis() + redPacketExpireSec * 1000))
+        redPackets.add(RedPacket(sender.uuid(), sender.coloredName(), shares, System.currentTimeMillis() + redPacketExpireSec * 1000))
         broadcast(
             "[gold]🧧 {player} 发出红包![] 共[count]份/[total]钍,输入 [accent]/qhb[] 抢红包!"
                 .with("player" to sender, "count" to count, "total" to total)
@@ -139,7 +140,7 @@ command("qhb", "抢红包") {
             // 过期退款
             val back = it.shares.sum()
             if (back > 0) {
-                val finder = Groups.player.find { p -> p.coloredName() == it.fromName }
+                val finder = Groups.player.find { p -> p.uuid() == it.fromUuid }
                     ?: Groups.player.find { p -> it.fromName.contains(p.name) }
                 finder?.let { f -> addMoney(f, back) }
             }
@@ -194,7 +195,8 @@ onEnable {
                 if (pkt.expireAt >= now) return@removeAll false
                 val back = pkt.shares.sum()
                 if (back > 0) {
-                    val finder = Groups.player.find { p -> pkt.fromName.contains(p.name) }
+                    val finder = Groups.player.find { p -> p.uuid() == pkt.fromUuid }
+                        ?: Groups.player.find { p -> pkt.fromName.contains(p.name) }
                     finder?.let { addMoney(it, back) }
                     broadcast("[grey]🧧 {from} 的红包过期退回[+]{back}钍".with("from" to pkt.fromName, "back" to back), quite = true)
                 }

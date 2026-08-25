@@ -11,6 +11,7 @@ import mindustry.Vars
 import mindustry.game.Gamemode
 import mindustry.io.MapIO
 import mindustry.maps.Map as MdtMap
+import java.time.Duration
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
@@ -30,6 +31,7 @@ private val detailCache = mutableMapOf<Int, Jval>()
 
 private fun String.httpGet(): String {
     val req = HttpRequest.newBuilder(URI.create(this))
+        .timeout(Duration.ofSeconds(30))
         .header("User-Agent", "ScriptAgent-WebMaps")
         .GET().build()
     val resp = http.send(req, HttpResponse.BodyHandlers.ofString())
@@ -39,6 +41,7 @@ private fun String.httpGet(): String {
 
 private fun String.httpGetBytes(): ByteArray {
     val req = HttpRequest.newBuilder(URI.create(this))
+        .timeout(Duration.ofSeconds(30))
         .header("User-Agent", "ScriptAgent-WebMaps")
         .GET().build()
     val resp = http.send(req, HttpResponse.BodyHandlers.ofByteArray())

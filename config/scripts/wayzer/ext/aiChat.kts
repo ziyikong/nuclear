@@ -19,7 +19,7 @@ name = "扩展: AI问答与抽奖(钍币)"
 val aiEnabled by config.key(true, "是否启用AI问答")
 val aiUrl by config.key("https://api.ltzy.top/v1/chat/completions", "OpenAI兼容接口完整地址,例如 https://xxx/v1/chat/completions")
 val aiKey by config.key("", "API密钥请配置在config.conf中")
-val aiModel by config.key("zhipu/glm-4.7-flash", "模型名")
+val aiModel by config.key("build/nemotron-3-ultra-550b-a55b", "模型名")
 val aiPrice by config.key(1L, "每次提问消耗的钍")
 val aiCooldownSec by config.key(10, "提问冷却(秒)")
 val aiMaxLen by config.key(180, "回复截断长度")
@@ -135,5 +135,7 @@ command("choujiang", "抽奖(消耗钍)") {
         }
     }
 }
+
+listen<EventType.PlayerLeave> { aiCooldowns.remove(it.player.uuid()) }
 
 onDisable { aiCooldowns.clear() }
