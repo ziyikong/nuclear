@@ -42,3 +42,11 @@ config/scripts/cache/
 config/scripts/data/*.db*
 config/scripts/data/kvStore.mv
 
+# ===== server2 =====
+server2/config/scripts/cache/
+server2/config/scripts/data/*.mv
+server2/config/scripts/data/*.db
+server2/libs/*.jar
+server2/config/mods/*.jar
+server2/config/logs/
+server2/config/settings_backups/
