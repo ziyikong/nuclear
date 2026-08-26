@@ -1,0 +1,52 @@
+package wayzer.ext
+//WayZer 版权所有(请勿删除版权注解)
+
+name = "跨服传送"
+
+val servers by config.key(mapOf<String, String>(), "服务器传送列表", "格式: {名字: \"介绍;地址\"} (;作为分割符)")
+
+data class Info(val name: String, val desc: String, val address: String, val port: Int)
+
+val infos: Map<String, Info>
+    get() = servers.mapValues { (k, v) ->
+        val sp1 = v.split(";")
+        assert(sp1.size == 2) { "格式错误: $v" }
+        val sp2 = sp1[1].split(":")
+        val port = sp2.getOrNull(1)?.toIntOrNull() ?: 6567
+        Info(k, sp1[0], sp2[0], port)
+    }
+
+// 默认内置服务器列表（当配置为空时生效）
+val defaultServers = mapOf(
+    "二服" to "传奇小游戏;121.40.62.75:5000"
+)
+
+val allInfos: Map<String, Info>
+    get() = if (servers.isEmpty()) defaultServers.mapValues { (k, v) ->
+        val sp1 = v.split(";")
+        val sp2 = sp1[1].split(":")
+        val port = sp2.getOrNull(1)?.toIntOrNull() ?: 6567
+        Info(k, sp1[0], sp2[0], port)
+    } else infos
+
+
+command("go", "传送到其他服务器") {
+    usage = "[名字,为空列出]"
+    type = CommandType.Client
+    aliases = listOf("前往")
+    body {
+        val info = arg.firstOrNull()
+            ?.let { allInfos[it] ?: returnReply("[red]错误的服务器名字".with()) }
+            ?: let {
+                val list = allInfos.values.map { "[gold]{name}:[tan]{desc}".with("name" to it.name, "desc" to it.desc) }
+                returnReply("[violet]可用服务器: \n{list:\n}".with("list" to list))
+            }
+        Call.connect(player!!.con, info.address, info.port)
+        broadcast(
+            "[cyan][-][salmon]{player.name}[salmon]飞往了{name}反应仓(/go {name})".with(
+                "player" to player!!,
+                "name" to info.name
+            )
+        )
+    }
+}
