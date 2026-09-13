@@ -1,11 +1,9 @@
 @file:Depends("wayzer/user/economy", "钍币经济")
-@file:Depends("wayzer/ext/pvpBridge", "PVP押注联动")
 
 package wayzer.user.ext
 
 import arc.util.io.Writes
 import cf.wayzer.scriptAgent.contextScript
-import wayzer.ext.PvpBridge
 import mindustry.gen.Building
 import mindustry.gen.Unit as MindustryUnit
 import wayzer.user.ext.Skills.Api.skill
@@ -99,8 +97,6 @@ companion object Api {
             this.aliases = aliases.toList()
             body {
                 @Suppress("MemberVisibilityCanBePrivate")
-                if (contextScript<PvpBridge>().matchActive)
-                    returnReply("[red]官方PVP对局进行中,技能已禁用".with())
                 if (state.rules.pvp)
                     returnReply("[red]PVP模式下禁用所有技能".with())
                 if (player!!.dead())
