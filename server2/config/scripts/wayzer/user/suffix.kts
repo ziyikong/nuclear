@@ -6,7 +6,21 @@ import mindustry.gen.Iconc
 val logVersion by config.key(false, "记录玩家的版本信息")
 
 val cache = mutableMapOf<String, String>()
-listen<EventType.PlayerLeave> { cache.remove(it.player.uuid()) }
+val vipSet = mutableSetOf<String>()
+listen<EventType.PlayerJoin> {
+    val p = it.player
+    if (p.hasPermission("suffix.vip")) vipSet += p.uuid()
+}
+listen<EventType.PlayerLeave> {
+    val u = it.player.uuid()
+    cache.remove(u)
+    vipSet.remove(u)
+}
+
+/** 非挂起判断玩家是否为VIP(@vip组/拥有suffix.vip权限)。供投票等无法挂起的场合同步使用 */
+fun isVip(player: Player): Boolean = player.uuid() in vipSet
+export(this::isVip)
+
 fun Player.getSuffix(): String? {
     cache[uuid()]?.let { return it }
     launch {

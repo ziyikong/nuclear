@@ -7,6 +7,7 @@ package wayzer.cmds
 
 import coreMindustry.PagedMenuBuilder
 import wayzer.VoteEvent
+import wayzer.user.isVip
 
 fun CommandContext.readArg(): String? = arg.firstOrNull().also { arg = arg.drop(1) }
 
@@ -52,6 +53,10 @@ command("kick", "踢出某人".with(), commands = VoteEvent.VoteCommands) {
     aliases = listOf("踢出")
     usage = "<玩家名/id> <理由>"
     attr(RequirePermission("wayzer.vote.kick"))
+    attr {
+        if (player?.let { isVip(it) } == true)
+            returnReply("[red]你是VIP玩家, 无法发起踢人投票".with())
+    }
     body {
         val target = getTarget()
         val reason = getInput("踢人理由", "[red]投票踢人需要理由".with())
@@ -59,7 +64,8 @@ command("kick", "踢出某人".with(), commands = VoteEvent.VoteCommands) {
         val event = VoteEvent(
             thisScript, player,
             voteDesc = "踢人(踢出[red]{target}[yellow])".with("target" to target),
-            extDesc = "[red]理由: [yellow]${reason}"
+            extDesc = "[red]理由: [yellow]${reason}",
+            canVote = { p -> !p.dead() && !isVip(p) },
         )
         val snapshot = PlayerData[target]
         if (event.awaitResult()) {

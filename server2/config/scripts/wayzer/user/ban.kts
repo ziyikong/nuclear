@@ -6,6 +6,8 @@ import coreLibrary.DBApi.DB.registerTable
 import java.text.DateFormat
 import java.time.Duration
 import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import java.util.*
 
 registerTable(PlayerBan.T)
@@ -61,6 +63,44 @@ command("banX", "管理指令: 禁封") {
 
         ban(snapshot, time, reason, player)
         reply("[green]已禁封{qq}".with("qq" to (uuid)))
+    }
+}
+command("banmap", "查看当前所有未过期的封禁记录") {
+    usage = "[page]"
+    aliases = listOf("banlist", "ban查询")
+    attr(RequirePermission("wayzer.admin.ban"))
+    body {
+        val page = arg.firstOrNull()?.toIntOrNull()?.coerceAtLeast(1) ?: 1
+        val perPage = 10
+        val all = withContext(Dispatchers.IO) { PlayerBan.allNotEnd() }
+            .sortedByDescending { it.createTime }
+        if (all.isEmpty())
+            returnReply("[green]当前没有进行中的封禁".with())
+        val totalPage = (all.size + perPage - 1) / perPage
+        val p = page.coerceIn(1, totalPage)
+        val items = all.slice((p - 1) * perPage until (p - 1) * perPage + perPage)
+        val opName: (String?) -> String = { op ->
+            op?.let {
+                val ids = it.removeSurrounding("$").split("$")
+                val uuid = ids.firstOrNull() ?: it
+                netServer.admins.getInfoOptional(uuid)?.name
+                    ?: ids.joinToString(", ")
+            } ?: "(系统)"
+        }
+        val lines = items.joinToString("\n") { ban ->
+            val ids = ban.ids.removeSurrounding("$").split("$").joinToString(", ")
+            val firstId = ids.firstOrNull() ?: "?"
+            val formatTime = { t: Instant ->
+                t.atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))
+            }
+            "[red]#${ban.id}[green] ${firstId} [yellow]ids:${ids} [lightgrey]原因:${ban.reason} " +
+                    "[violet]操作者:${opName(ban.operator)} " +
+                    "[grey]封禁:${formatTime(ban.createTime)} [grey]解禁:${formatTime(ban.endTime)}"
+        }
+        reply(
+            "[violet]封禁记录(第${p}/${totalPage}页,共${all.size}条)\n{lines}\n" +
+                    "[grey]使用 /unbanX <ID> 取消封禁".with("lines" to lines)
+        )
     }
 }
 command("unbanX", "管理指令: 解禁") {
